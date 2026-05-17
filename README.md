@@ -1,2 +1,473 @@
-# Gemini-Student-AI
-Gemini Student Option to improve your ideas
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GhostChat Dashboard</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial, sans-serif;
+}
+
+body{
+    background:#0f0f0f;
+    color:white;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+    padding: 20px;
+}
+
+/* CONTENEDOR PRINCIPAL: Grid de 3 columnas para PC */
+.dashboard-container {
+    display: grid;
+    grid-template-columns: 300px 380px 300px;
+    gap: 25px;
+    max-width: 1100px;
+    width: 100%;
+}
+
+/* TARJETAS LATERALES EXTERNAS */
+.side-panel {
+    background: #181818;
+    border-radius: 25px;
+    padding: 20px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    height: 650px;
+    overflow-y: auto;
+}
+
+.panel-title {
+    font-size: 20px;
+    font-weight: bold;
+    color: #7a5cff;
+    border-bottom: 1px solid #2a2a2a;
+    padding-bottom: 10px;
+}
+
+.idea-card {
+    background: #222;
+    padding: 12px;
+    border-radius: 12px;
+    border-left: 4px solid #7a5cff;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.idea-card strong {
+    color: #a291ff;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.skill-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+.skill-name {
+    font-size: 14px;
+    color: #ccc;
+}
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: #2a2a2a;
+    border-radius: 4px;
+    overflow: hidden;
+}
+.progress-fill {
+    height: 100%;
+    background: #7a5cff;
+    box-shadow: 0 0 10px #7a5cff;
+}
+
+/* SECCIÓN DEL CHAT CENTRAL */
+.chat-container{
+    height:650px;
+    background:#181818;
+    border-radius:25px;
+    overflow:hidden;
+    box-shadow:0 0 25px rgba(0,0,0,0.7);
+    display:flex;
+    flex-direction:column;
+}
+
+.header{
+    background:#111;
+    padding:20px;
+    text-align:center;
+    font-size:24px;
+    font-weight:bold;
+    color:#7a5cff;
+    border-bottom:1px solid #2a2a2a;
+}
+
+.messages{
+    flex:1;
+    padding:15px;
+    overflow-y:auto;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+
+.message{
+    max-width:75%;
+    padding:12px;
+    padding-right:30px; /* MODIFICADO: Espacio interno preventivo para que la X no pise las letras */
+    border-radius:15px;
+    animation:fadeIn 0.3s ease;
+    position:relative;
+    transition: opacity 0.3s ease;
+}
+
+.sent{
+    align-self:flex-end;
+    background:#3114b1;
+}
+
+.received{
+    align-self:flex-start;
+    background:#2c2c2c;
+}
+
+.received-other {
+    align-self: flex-start;
+    background: #005959; 
+    border-left: 3px solid #00ffcc;
+}
+
+/* MODIFICADO: Ajuste de posición interno en la esquina superior derecha del mensaje */
+.msg-close-btn {
+    position: absolute;
+    top: 6px;
+    right: 10px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.4);
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    font-weight: bold;
+    transition: color 0.2s, transform 0.2s;
+}
+.msg-close-btn:hover {
+    color: #ff0055;
+    transform: scale(1.2);
+}
+
+.timer{
+    font-size:10px;
+    opacity:0.7;
+    margin-top:5px;
+}
+
+.input-area{
+    padding:15px;
+    background:#111;
+    display:flex;
+    gap:10px;
+}
+
+input{
+    flex:1;
+    padding:12px;
+    border:none;
+    outline:none;
+    border-radius:12px;
+    background:#2a2a2a;
+    color:white;
+}
+
+button {
+    padding:12px 18px;
+    border:none;
+    border-radius:12px;
+    background:#3114b1;
+    color:white;
+    cursor:pointer;
+    transition:0.2s;
+}
+
+button:hover{
+    opacity:0.8;
+}
+
+.action-btn {
+    width: 100%;
+    background: #2a2a2a;
+    border: 1px solid #444;
+    font-size: 13px;
+    margin-top: 5px;
+    color: white;
+    cursor: pointer;
+    padding: 12px;
+    border-radius: 12px;
+    transition: 0.2s;
+}
+.action-btn:hover {
+    background: #7a5cff;
+    border-color: #7a5cff;
+}
+
+@keyframes fadeIn{
+    from{ opacity:0; transform:translateY(10px); }
+    to{ opacity:1; transform:translateY(0); }
+}
+
+@media (max-width: 1000px) {
+    .dashboard-container {
+        grid-template-columns: 100%;
+        max-width: 380px;
+    }
+    .side-panel {
+        height: auto;
+    }
+}
+</style>
+</head>
+<body>
+
+<div class="dashboard-container">
+
+    <div class="side-panel">
+        <div class="panel-title">Archivos de Red</div>
+            
+        <p style="font-size: 13px; color: #aaa; line-height: 1.4;">
+            Accede de forma segura al registro temporal de 10 minutos para gestionar y revisar la mensajería del clúster.
+        </p>
+        
+        <button class="action-btn" onclick="window.open('./JAVA.html', '_blank')">Abrir Java y HTML</button>
+        
+        <div class="panel-title">Descubre Más</div>
+        <p style="font-size: 13px; color: #aaa; line-height: 1.4;">
+            "La tecnología de vanguardia no reemplaza la creatividad humana, potencia nuestras capacidades."
+        </p>
+        <button class="action-btn" onclick="generarDatoTech()">Dato Tecnológico</button>
+        <a href="./Archiva.html" style="color: black;">Gemini AI</a>
+    </div>
+    
+    <div class="chat-container">
+        <div class="header">Gemini Student AI</div>
+        <div class="messages" id="messages"></div>
+        <div class="input-area">
+            <input type="text" id="messageInput" placeholder="Escribe un mensaje...">
+            <button onclick="sendMessage()">Enviar</button>
+        </div>
+    </div>
+
+    <div class="side-panel">
+        <div class="panel-title">Materias integradoras</div>
+        
+        <div class="skill-group">
+            <div class="skill-name">Desarrollo de Sistemas & HTML</div>
+            <div class="progress-bar"><div class="progress-fill" style="width: 98%;"></div></div>
+        </div>
+
+        <div class="skill-group">
+            <div class="skill-name">Física & Matemáticas Rápidas</div>
+            <div class="progress-bar"><div class="progress-fill" style="width: 95%;"></div></div>
+        </div>
+
+        <div class="skill-group">
+            <div class="skill-name">Diseño de Prototipos & 3D</div>
+            <div class="progress-bar"><div class="progress-fill" style="width: 90%;"></div></div>
+        </div>
+
+        <div class="panel-title">Utilidades</div>
+        <div class="idea-card" style="border-left-color: #00ffcc;">
+            <strong>Estado de Red:</strong>
+            <span> Cloud Firestore Online</span>
+        </div>
+        <div class="idea-card" style="border-left-color: #ff0055;">
+            <strong>Filtro Temporal:</strong>
+            Tiempo de respuesta 30s
+        </div>
+        <a href="./Second.html" style="color: white;">Descubre más Datos</a>
+    </div>
+
+</div>
+
+
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyAWojveM3FvPHcgqulPqyEqUVX7AL7rdYw",
+        authDomain: "gemini-ai-data-base.firebaseapp.com",
+        projectId: "gemini-ai-data-base",
+        storageBucket: "gemini-ai-data-base.firebasestorage.app",
+        messagingSenderId: "601122020069",
+        appId: "1:601122020069:web:4ebfefeea5aff1daeb920c",
+        measurementId: "G-K34K751P6T"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const mensajesRef = db.collection("mensajes");
+
+    const messagesContainer = document.getElementById("messages");
+    const input = document.getElementById("messageInput");
+    const miUsuarioId = Math.random().toString(36).substring(2, 11);
+
+    const usuariosExternosRegistrados = [];
+
+    // Mensaje del sistema fijo sin botón de cerrar
+    function mostrarBienvenida() {
+        const messageDiv = document.createElement("div");
+        messageDiv.classList.add("message", "received");
+        messageDiv.innerHTML = `<div>Hola soy gemini en que te puedo ayudar hoy</div>`;
+        messagesContainer.appendChild(messageDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    mostrarBienvenida();
+
+    function guardarEnArchivoCompartido(texto, remitente) {
+        let registros = JSON.parse(localStorage.getItem("java_html_logs")) || [];
+        registros.push({
+            texto: texto,
+            usuarioCorto: remitente.substring(0, 5),
+            expiraEn: Date.now() + (10 * 60 * 1000)
+        });
+        localStorage.setItem("java_html_logs", JSON.stringify(registros));
+    }
+
+    // Función para remover burbujas de forma fluida
+    function removerBurbujaConAnimacion(elemento, intervaloId) {
+        if(intervaloId) clearInterval(intervaloId);
+        elemento.style.opacity = "0";
+        setTimeout(() => { elemento.remove(); }, 300);
+    }
+
+    function sendMessage(){
+        const text = input.value.trim();
+        if(text === "") return;
+
+        guardarEnArchivoCompartido(text, "Mí Usuario");
+
+        const messageDiv = document.createElement("div");
+        messageDiv.classList.add("message", "sent");
+
+        const timer = document.createElement("div");
+        timer.classList.add("timer");
+        let timeLeft = 30;
+        timer.innerText = `Tu respuesta en ${timeLeft}s`;
+
+        // MODIFICADO: Estructura HTML interna limpia con el botón incrustado correctamente
+        messageDiv.innerHTML = `
+            <button class="msg-close-btn" onclick="removerBurbujaConAnimacion(this.parentElement, ${null})">&times;</button>
+            <div>${text}</div>
+        `;
+        messageDiv.appendChild(timer);
+        messagesContainer.appendChild(messageDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+        input.value = ""; 
+
+        const countdown = setInterval(() => {
+            timeLeft--;
+            timer.innerText = `Tu respuesta en ${timeLeft}s`;
+            if(timeLeft <= 0){
+                removerBurbujaConAnimacion(messageDiv, countdown);
+            }
+        }, 1000);
+
+        // Vinculación dinámica del id del timer al botón X
+        messageDiv.querySelector('.msg-close-btn').setAttribute('onclick', `removerBurbujaConAnimacion(this.parentElement, ${countdown})`);
+
+        mensajesRef.add({
+            texto: text,
+            fecha: firebase.firestore.FieldValue.serverTimestamp(),
+            usuario: miUsuarioId
+        }).catch((error) => {
+            console.error("Error Firebase:", error);
+        });
+    }
+
+    input.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") sendMessage();
+    });
+
+    const TIEMPO_VIDA_MS = 30 * 1000;
+    const limiteTiempo = new Date(Date.now() - TIEMPO_VIDA_MS);
+
+    mensajesRef
+        .where("fecha", ">=", limiteTiempo)
+        .orderBy("fecha", "asc")
+        .onSnapshot((snapshot) => {
+            snapshot.docChanges().forEach((change) => {
+                if (change.type === "added") {
+                    const data = change.doc.data();
+                    if (data.usuario !== miUsuarioId && data.fecha) {
+                        
+                        guardarEnArchivoCompartido(data.texto, data.usuario);
+
+                        const fechaMensajeMs = data.fecha.toMillis();
+                        const transcurrido = Date.now() - fechaMensajeMs;
+                        let timeLeft = Math.max(0, Math.ceil((TIEMPO_VIDA_MS - transcurrido) / 1000));
+
+                        if (timeLeft <= 0) return;
+
+                        const messageDiv = document.createElement("div");
+                        
+                        if (!usuariosExternosRegistrados.includes(data.usuario)) {
+                            usuariosExternosRegistrados.push(data.usuario);
+                        }
+                        
+                        if (usuariosExternosRegistrados.indexOf(data.usuario) === 0) {
+                            messageDiv.classList.add("message", "received");
+                        } else {
+                            messageDiv.classList.add("message", "received", "received-other");
+                        }
+
+                        const timer = document.createElement("div");
+                        timer.classList.add("timer");
+                        timer.innerText = `Tu respuesta en ${timeLeft}s`;
+
+                        // MODIFICADO: Estructura interna para los mensajes recibidos de la red
+                        messageDiv.innerHTML = `
+                            <button class="msg-close-btn" onclick="removerBurbujaConAnimacion(this.parentElement, ${null})">&times;</button>
+                            <div>${data.texto}</div>
+                        `;
+                        messageDiv.appendChild(timer);
+                        messagesContainer.appendChild(messageDiv);
+                        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+                        const countdown = setInterval(() => {
+                            timeLeft--;
+                            if (timeLeft >= 0) timer.innerText = `Tu respuesta en ${timeLeft}s`;
+                            if (timeLeft <= 0) {
+                                removerBurbujaConAnimacion(messageDiv, countdown);
+                            }
+                        }, 1000);
+
+                        messageDiv.querySelector('.msg-close-btn').setAttribute('onclick', `removerBurbujaConAnimacion(this.parentElement, ${countdown})`);
+                    }
+                }
+            });
+        });
+
+    function generarDatoTech() {
+        const datos = [
+            "El primer error informático real de la historia fue una polilla atrapada en un relé en 1947.",
+            "Firestore utiliza colecciones y documentos NoSQL optimizados para lecturas ultra veloces en tiempo real.",
+            "La impresión 3D mediante filamento PLA utiliza ácido poliláctico derivado del almidón de maíz, siendo biodegradable."
+        ];
+        const aleatorio = datos[Math.floor(Math.random() * datos.length)];
+        alert(aleatorio);
+    }
+</script>
+</body>
+</html>
