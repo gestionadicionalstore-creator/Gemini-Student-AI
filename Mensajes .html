@@ -123,7 +123,7 @@ body{
 .message{
     max-width:75%;
     padding:12px;
-    padding-right:30px; /* MODIFICADO: Espacio interno preventivo para que la X no pise las letras */
+    padding-right:30px; /* Espacio interno preventivo para que la X no pise las letras */
     border-radius:15px;
     animation:fadeIn 0.3s ease;
     position:relative;
@@ -146,7 +146,7 @@ body{
     border-left: 3px solid #00ffcc;
 }
 
-/* MODIFICADO: Ajuste de posición interno en la esquina superior derecha del mensaje */
+/* Ajuste de posición interno en la esquina superior derecha del mensaje */
 .msg-close-btn {
     position: absolute;
     top: 6px;
@@ -290,14 +290,12 @@ button:hover{
         </div>
         <div class="idea-card" style="border-left-color: #ff0055;">
             <strong>Filtro Temporal:</strong>
-            Tiempo de respuesta 30s
+            Tiempo de respuesta 300s
         </div>
         <a href="./Second.html" style="color: white;">Descubre más Datos</a>
     </div>
 
 </div>
-
-
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -323,7 +321,6 @@ button:hover{
 
     const usuariosExternosRegistrados = [];
 
-    // Mensaje del sistema fijo sin botón de cerrar
     function mostrarBienvenida() {
         const messageDiv = document.createElement("div");
         messageDiv.classList.add("message", "received");
@@ -344,7 +341,6 @@ button:hover{
         localStorage.setItem("java_html_logs", JSON.stringify(registros));
     }
 
-    // Función para remover burbujas de forma fluida
     function removerBurbujaConAnimacion(elemento, intervaloId) {
         if(intervaloId) clearInterval(intervaloId);
         elemento.style.opacity = "0";
@@ -362,10 +358,9 @@ button:hover{
 
         const timer = document.createElement("div");
         timer.classList.add("timer");
-        let timeLeft = 300;
+        let timeLeft = 300; // Configurado a 300 segundos
         timer.innerText = `Tu respuesta en ${timeLeft}s`;
 
-        // MODIFICADO: Estructura HTML interna limpia con el botón incrustado correctamente
         messageDiv.innerHTML = `
             <button class="msg-close-btn" onclick="removerBurbujaConAnimacion(this.parentElement, ${null})">&times;</button>
             <div>${text}</div>
@@ -384,7 +379,6 @@ button:hover{
             }
         }, 1000);
 
-        // Vinculación dinámica del id del timer al botón X
         messageDiv.querySelector('.msg-close-btn').setAttribute('onclick', `removerBurbujaConAnimacion(this.parentElement, ${countdown})`);
 
         mensajesRef.add({
@@ -400,7 +394,8 @@ button:hover{
         if (e.key === "Enter") sendMessage();
     });
 
-    const TIEMPO_VIDA_MS = 30 * 1000;
+    // MODIFICADO: Tiempo de vida en la base de datos sincronizado a 300 segundos (5 minutos)
+    const TIEMPO_VIDA_MS = 300 * 1000; 
     const limiteTiempo = new Date(Date.now() - TIEMPO_VIDA_MS);
 
     mensajesRef
@@ -416,6 +411,7 @@ button:hover{
 
                         const fechaMensajeMs = data.fecha.toMillis();
                         const transcurrido = Date.now() - fechaMensajeMs;
+                        // MODIFICADO: Ajuste del cálculo dinámico para el receptor en base a los 300s
                         let timeLeft = Math.max(0, Math.ceil((TIEMPO_VIDA_MS - transcurrido) / 1000));
 
                         if (timeLeft <= 0) return;
@@ -436,7 +432,6 @@ button:hover{
                         timer.classList.add("timer");
                         timer.innerText = `Tu respuesta en ${timeLeft}s`;
 
-                        // MODIFICADO: Estructura interna para los mensajes recibidos de la red
                         messageDiv.innerHTML = `
                             <button class="msg-close-btn" onclick="removerBurbujaConAnimacion(this.parentElement, ${null})">&times;</button>
                             <div>${data.texto}</div>
