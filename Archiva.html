@@ -159,7 +159,7 @@
         }
 
         historialMensajes.forEach((item, index) => {
-            const tiempoRestante = Math.max(0, Math.ceil((item.expiraEn - Date.now()) / 1000));
+            const tiempoRestante = Math.max(0, Math.ceil((item.expiraEn - Date.now()) / 100));
             const minutos = Math.floor(tiempoRestante / 60);
             const segundos = tiempoRestante % 60;
 
@@ -204,7 +204,7 @@
             localStorage.setItem("java_html_logs", JSON.stringify(historialMensajes));
             cargarYRenderizar();
         }
-    }, 1000);
+    }, 100);
 
     // Carga inicial
     cargarYRenderizar();
