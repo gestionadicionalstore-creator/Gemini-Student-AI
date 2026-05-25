@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Repositorio Remoto - En Listado</title>
+<style>
+*{ margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',Arial,sans-serif; }
+
+body{
+    background:#06040d;
+    background-image:
+        radial-gradient(white,rgba(255,255,255,.15) 1px,transparent 30px),
+        radial-gradient(circle at 50% 10%,rgba(122,92,255,.15),transparent 60%);
+    background-size:350px 350px,100% 100%;
+    color:white; min-height:100vh; padding:40px 20px;
+    display:flex; justify-content:center;
+}
+.repo-container{
+    max-width:750px; width:100%;
+    background:rgba(20,16,36,.7); backdrop-filter:blur(12px);
+    border:2px solid rgba(0,255,204,.3);
+    box-shadow:0 0 40px rgba(0,255,204,.1);
+    border-radius:25px; padding:30px; height:fit-content;
+}
+.repo-header{
+    display:flex; justify-content:space-between; align-items:center;
+    border-bottom:1px solid rgba(255,255,255,.1);
+    padding-bottom:20px; margin-bottom:20px; gap:10px; flex-wrap:wrap;
+}
+.repo-title{
+    font-size:22px; font-weight:bold; color:#00ffcc;
+    text-shadow:0 0 15px rgba(0,255,204,.4);
+    display:flex; align-items:center; gap:10px;
+}
+.back-btn{
+    background:rgba(122,92,255,.2); border:1px solid #7a5cff;
+    color:white; padding:8px 16px; border-radius:12px;
+    cursor:pointer; text-decoration:none; font-size:14px; transition:.2s;
+}
+.back-btn:hover{ background:#7a5cff; box-shadow:0 0 10px #7a5cff; }
+
+.status-bar{
+    display:flex; align-items:center; gap:8px;
+    background:rgba(0,255,204,.05); border:1px solid rgba(0,255,204,.2);
+    border-radius:12px; padding:10px 14px; font-size:13px;
+    color:#00ffcc; margin-bottom:18px;
+}
+.status-dot{ width:9px; height:9px; border-radius:50%; background:#555; flex-shrink:0; }
+.status-dot.online{ background:#00ffcc; box-shadow:0 0 8px #00ffcc; animation:blink 2s infinite; }
+.status-dot.error{ background:#ff0055; box-shadow:0 0 8px #ff0055; }
+@keyframes blink{ 0%,100%{opacity:1;} 50%{opacity:.3;} }
+
+.tabs-container{
+    display:flex; gap:8px; margin-bottom:15px;
+    background:rgba(0,0,0,.2); padding:6px; border-radius:14px;
+    border:1px solid rgba(255,255,255,.05); flex-wrap:wrap;
+}
+.tab-btn{
+    flex:1; min-width:90px; background:transparent; border:none;
+    color:#aaa; padding:9px 10px; border-radius:10px; cursor:pointer;
+    font-size:13px; font-weight:600; transition:all .2s;
+}
+.tab-btn:hover{ color:white; background:rgba(255,255,255,.05); }
+.tab-btn.active{ background:#7a5cff; color:white; box-shadow:0 0 10px rgba(122,92,255,.4); }
+
+.filtro-tiempo{ display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap; }
+.filtro-btn{
+    background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1);
+    color:#aaa; padding:5px 12px; border-radius:20px;
+    cursor:pointer; font-size:12px; transition:.2s;
+}
+.filtro-btn:hover{ color:white; border-color:#7a5cff; }
+.filtro-btn.active{ background:#7a5cff; color:white; border-color:#7a5cff; }
+
+.count-badge{
+    display:inline-block; margin-bottom:14px;
+    background:rgba(0,255,204,.08); color:#00ffcc;
+    font-size:12px; padding:4px 12px; border-radius:20px;
+    border:1px solid rgba(0,255,204,.2);
+}
+.log-list{
+    display:flex; flex-direction:column; gap:12px;
+    max-height:530px; overflow-y:auto; padding-right:4px;
+}
+.log-list::-webkit-scrollbar{ width:5px; }
+.log-list::-webkit-scrollbar-thumb{ background:#7a5cff; border-radius:10px; }
+
+.log-item{
+    background:rgba(255,255,255,.03);
+    border:1px solid rgba(122,92,255,.15);
+    border-left:5px solid #7a5cff;
+    border-radius:14px; padding:14px;
+    display:flex; justify-content:space-between;
+    align-items:flex-start; animation:slideIn .3s ease; gap:12px;
+}
+.log-item.recv-msg{ border-left-color:#00ffcc; background:rgba(0,255,204,.02); }
+.log-item.expired-msg{ border-left-color:#444; opacity:.55; }
+
+.log-content{ flex:1; }
+.log-user{
+    font-size:11px; color:#a291ff; text-transform:uppercase;
+    letter-spacing:.5px; margin-bottom:5px; font-weight:bold;
+    display:flex; align-items:center; gap:6px;
+}
+.user-tag{ font-size:10px; padding:1px 7px; border-radius:6px; font-weight:bold; }
+.tag-recv{ background:rgba(0,255,204,.15); color:#00ffcc; }
+.tag-exp{ background:rgba(80,80,80,.3); color:#888; }
+
+.log-text{ font-size:14px; color:#eee; line-height:1.4; word-break:break-word; }
+.log-fecha{ font-size:11px; color:#555; margin-top:5px; }
+
+.right-controls{ display:flex; flex-direction:column; align-items:flex-end; gap:6px; flex-shrink:0; }
+
+.log-timer{
+    font-size:12px; color:#00ffcc;
+    background:rgba(0,255,204,.1); padding:5px 10px;
+    border-radius:20px; white-space:nowrap;
+    border:1px solid rgba(0,255,204,.2);
+    animation:pulse 1.5s infinite;
+}
+.log-timer.expired{ color:#777; background:rgba(80,80,80,.1); border-color:rgba(80,80,80,.2); animation:none; }
+.log-timer.long{ color:#a291ff; background:rgba(122,92,255,.1); border-color:rgba(122,92,255,.3); animation:none; }
+
+.empty-state{ text-align:center; padding:40px 0; color:#666; font-size:15px; }
+.loading-state{
+    text-align:center; padding:40px 0; color:#00ffcc; font-size:15px;
+    display:flex; align-items:center; justify-content:center; gap:10px;
+}
+.spinner{
+    width:20px; height:20px; border:2px solid rgba(0,255,204,.2);
+    border-top-color:#00ffcc; border-radius:50%; animation:spin .7s linear infinite;
+}
+@keyframes spin{ to{ transform:rotate(360deg); } }
+@keyframes slideIn{ from{opacity:0;transform:translateY(5px);} to{opacity:1;transform:translateY(0);} }
+@keyframes pulse{
+    0%{box-shadow:0 0 0 rgba(0,255,204,0);}
+    50%{box-shadow:0 0 10px rgba(0,255,204,.4);}
+    100%{box-shadow:0 0 0 rgba(0,255,204,0);}
+}
+</style>
+</head>
+<body>
+
+<div class="repo-container">
+
+    <div class="repo-header">
+        <div class="repo-title">📡 En Listado — Mensajes Globales</div>
+        <a href="./Mensajes_.html" class="back-btn">← Volver</a>
+    </div>
+
+    <div class="status-bar">
+        <div class="status-dot" id="statusDot"></div>
+        <span id="statusText">Conectando a Firebase Ceis...</span>
+    </div>
+
+    <div class="tabs-container">
+        <button class="tab-btn active" id="tabTodos"     onclick="cambiarTab('todos')">💬 Todos</button>
+        <button class="tab-btn"        id="tabActivos"   onclick="cambiarTab('activos')">⚡ Activos</button>
+        <button class="tab-btn"        id="tabExpirados" onclick="cambiarTab('expirados')">🧨 Expirados</button>
+    </div>
+
+    <div class="filtro-tiempo">
+        <button class="filtro-btn active" id="ft1h"  onclick="cambiarFiltroTiempo('1h')">Última 1h</button>
+        <button class="filtro-btn"        id="ft6h"  onclick="cambiarFiltroTiempo('6h')">6h</button>
+        <button class="filtro-btn"        id="ft12h" onclick="cambiarFiltroTiempo('12h')">12h</button>
+        <button class="filtro-btn"        id="ft24h" onclick="cambiarFiltroTiempo('24h')">24h</button>
+        <button class="filtro-btn"        id="ftall" onclick="cambiarFiltroTiempo('all')">Todo</button>
+    </div>
+
+    <div class="count-badge" id="countBadge">Cargando...</div>
+
+    <div class="log-list" id="logList">
+        <div class="loading-state">
+            <div class="spinner"></div> Conectando a la base de datos...
+        </div>
+    </div>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<script>
+
+/* ── FIREBASE CEIS ── */
+firebase.initializeApp({
+    apiKey:            "AIzaSyBlwMyf-B1xzt4zgYkGzk8-Msj2K-KR8mQ",
+    authDomain:        "ceis-52b72.firebaseapp.com",
+    projectId:         "ceis-52b72",
+    storageBucket:     "ceis-52b72.firebasestorage.app",
+    messagingSenderId: "599710034437",
+    appId:             "1:599710034437:web:24a4836549a03920314a6c",
+    measurementId:     "G-L4LJVPGFQ5"
+});
+const db          = firebase.firestore();
+const mensajesRef = db.collection("mensajes");
+
+/* ── ESTADO ── */
+let tabActual    = 'todos';
+let filtroTiempo = '1h';
+let cache        = [];
+
+/* ── TABS ── */
+function cambiarTab(t) {
+    tabActual = t;
+    ['todos','activos','expirados'].forEach(x => {
+        document.getElementById('tab' + x.charAt(0).toUpperCase() + x.slice(1))
+            .classList.toggle('active', x === t);
+    });
+    renderLista();
+}
+
+/* ── FILTRO TIEMPO ── */
+function cambiarFiltroTiempo(r) {
+    filtroTiempo = r;
+    ['1h','6h','12h','24h','all'].forEach(x => {
+        document.getElementById('ft' + x).classList.toggle('active', x === r);
+    });
+    renderLista();
+}
+
+/* ── HELPERS ── */
+function escapeHTML(str) {
+    if (!str) return '[vacío]';
+    if (str.startsWith('data:image')) return '🖼️ [Imagen adjunta]';
+    if (str === '[Audio Stream]')     return '🎙️ [Audio]';
+    return str.replace(/[&<>'"]/g, c =>
+        ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+}
+
+function formatFecha(ms) {
+    if (!ms) return '';
+    return new Date(ms).toLocaleString('es-EC',
+        {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'});
+}
+
+function calcTimeLeft(msg) {
+    if (!msg.fechaMs) return null;
+    return Math.ceil(((msg.tiempoGuardado || 300) * 1000 - (Date.now() - msg.fechaMs)) / 1000);
+}
+
+/* ── RENDER ── */
+function renderLista() {
+    const container = document.getElementById('logList');
+    const ahora     = Date.now();
+
+    const limites = {'1h':3600,'6h':21600,'12h':43200,'24h':86400,'all':Infinity};
+    const limMs   = (limites[filtroTiempo] || 3600) * 1000;
+
+    let lista = cache.filter(m => m.fechaMs && (ahora - m.fechaMs) <= limMs);
+
+    if (tabActual === 'activos')   lista = lista.filter(m => calcTimeLeft(m) > 0);
+    if (tabActual === 'expirados') lista = lista.filter(m => { const t = calcTimeLeft(m); return t !== null && t <= 0; });
+
+    lista = [...lista].reverse(); // más reciente primero
+
+    document.getElementById('countBadge').innerText =
+        lista.length + ' mensaje' + (lista.length !== 1 ? 's' : '');
+
+    container.innerHTML = '';
+
+    if (lista.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                Sin mensajes en este rango.<br>
+                <small style="color:#444;font-size:12px;">
+                    Prueba ampliar el filtro de tiempo o envía un mensaje desde Mensajes_.html
+                </small>
+            </div>`;
+        return;
+    }
+
+    lista.forEach(msg => {
+        const tl  = calcTimeLeft(msg);
+        const exp = tl !== null && tl <= 0;
+
+        const item = document.createElement('div');
+        item.classList.add('log-item', exp ? 'expired-msg' : 'recv-msg');
+
+        /* Timer label */
+        let timerHtml;
+        if (tl === null) {
+            timerHtml = `<span class="log-timer long">⏳ Sin fecha</span>`;
+        } else if (exp) {
+            timerHtml = `<span class="log-timer expired">✔ Expirado</span>`;
+        } else if (tl > 3600) {
+            const h = Math.floor(tl/3600), m = Math.floor((tl%3600)/60);
+            timerHtml = `<span class="log-timer long">💾 ${h}h ${m}m</span>`;
+        } else if (tl > 60) {
+            const m = Math.floor(tl/60), s = tl%60;
+            timerHtml = `<span class="log-timer">⏱️ ${m}m ${s}s</span>`;
+        } else {
+            timerHtml = `<span class="log-timer">🧨 ${tl}s</span>`;
+        }
+
+        const uid    = (msg.usuario || '?').substring(0, 8);
+        const tagCls = exp ? 'tag-exp' : 'tag-recv';
+
+        item.innerHTML = `
+            <div class="log-content">
+                <div class="log-user">
+                    ${uid}
+                    <span class="user-tag ${tagCls}">${exp ? 'EXPIRADO' : 'MENSAJE'}</span>
+                </div>
+                <div class="log-text">${escapeHTML(msg.texto)}</div>
+                <div class="log-fecha">${formatFecha(msg.fechaMs)}</div>
+            </div>
+            <div class="right-controls">${timerHtml}</div>
+        `;
+        container.appendChild(item);
+    });
+}
+
+/* ── FIRESTORE LISTENER ──
+   Misma query que Mensajes_.html: sin .where(), solo orderBy fecha.
+   Así no requiere índice compuesto y trae todo en tiempo real.
+*/
+mensajesRef
+    .orderBy("fecha", "asc")
+    .onSnapshot({ includeMetadataChanges: false }, snapshot => {
+
+        snapshot.docChanges().forEach(change => {
+            const data  = change.doc.data();
+            const docId = change.doc.id;
+
+            if (change.type === 'removed') {
+                cache = cache.filter(m => m.docId !== docId);
+                return;
+            }
+
+            if (!data.fecha) return; // esperar timestamp real
+
+            const entry = {
+                docId,
+                texto:          data.texto          || '',
+                tipo:           data.tipo            || 'texto',
+                usuario:        data.usuario         || '',
+                tiempoGuardado: data.tiempoGuardado  || 300,
+                fechaMs:        data.fecha.toMillis()
+            };
+
+            const idx = cache.findIndex(m => m.docId === docId);
+            if (idx >= 0) cache[idx] = entry;
+            else          cache.push(entry);
+        });
+
+        cache.sort((a, b) => a.fechaMs - b.fechaMs);
+        renderLista();
+
+        document.getElementById('statusDot').className  = 'status-dot online';
+        document.getElementById('statusText').innerText =
+            'Firebase Ceis Online ✓  —  ' + cache.length + ' mensaje(s) cargado(s)';
+
+    }, err => {
+        console.error(err);
+        document.getElementById('statusDot').className  = 'status-dot error';
+        document.getElementById('statusText').innerText = 'Error: ' + err.message;
+        document.getElementById('logList').innerHTML =
+            `<div class="empty-state">⚠️ ${err.message}</div>`;
+    });
+
+/* Refresca timers cada 5s */
+setInterval(() => { if (cache.length) renderLista(); }, 5000);
+
+</script>
+</body>
+</html>
