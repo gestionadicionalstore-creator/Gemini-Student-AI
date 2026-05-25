@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Repositorio Remoto - En Listado</title>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Segoe UI',Arial,sans-serif;
+}
+
+body{
+    background:#06040d;
+    background-image:
+        radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 30px),
+        radial-gradient(circle at 50% 10%, rgba(122,92,255,.15), transparent 60%);
+    background-size:350px 350px,100% 100%;
+    color:white;
+    min-height:100vh;
+    padding:40px 20px;
+    display:flex;
+    justify-content:center;
+}
+
+.repo-container{
+    max-width:750px;
+    width:100%;
+    background:rgba(20,16,36,.7);
+    backdrop-filter:blur(12px);
+    border:2px solid rgba(0,255,204,.3);
+    box-shadow:0 0 40px rgba(0,255,204,.1);
+    border-radius:25px;
+    padding:30px;
+    height:fit-content;
+}
+
+.repo-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    border-bottom:1px solid rgba(255,255,255,.1);
+    padding-bottom:20px;
+    margin-bottom:20px;
+    gap:10px;
+    flex-wrap:wrap;
+}
+
+.repo-title{
+    font-size:24px;
+    font-weight:bold;
+    color:#00ffcc;
+    text-shadow:0 0 15px rgba(0,255,204,.4);
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.header-actions{
+    display:flex;
+    gap:10px;
+    align-items:center;
+    flex-wrap:wrap;
+}
+
+.back-btn{
+    background:rgba(122,92,255,.2);
+    border:1px solid #7a5cff;
+    color:white;
+    padding:8px 16px;
+    border-radius:12px;
+    cursor:pointer;
+    text-decoration:none;
+    font-size:14px;
+    transition:.2s;
+}
+
+.back-btn:hover{
+    background:#7a5cff;
+    box-shadow:0 0 10px #7a5cff;
+}
+
+/* ESTADO CONEXIÓN */
+.status-bar{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background:rgba(0,255,204,.05);
+    border:1px solid rgba(0,255,204,.2);
+    border-radius:12px;
+    padding:8px 14px;
+    font-size:13px;
+    color:#00ffcc;
+    margin-bottom:20px;
+}
+
+.status-dot{
+    width:8px;
+    height:8px;
+    border-radius:50%;
+    background:#555;
+    flex-shrink:0;
+    transition:background .3s;
+}
+
+.status-dot.online{ background:#00ffcc; box-shadow:0 0 8px #00ffcc; animation:blink 2s infinite; }
+.status-dot.error{ background:#ff0055; box-shadow:0 0 8px #ff0055; }
+
+@keyframes blink{
+    0%,100%{ opacity:1; }
+    50%{ opacity:.4; }
+}
+
+/* TABS */
+.tabs-container{
+    display:flex;
+    gap:10px;
+    margin-bottom:20px;
+    background:rgba(0,0,0,.2);
+    padding:6px;
+    border-radius:14px;
+    border:1px solid rgba(255,255,255,.05);
+    flex-wrap:wrap;
+}
+
+.tab-btn{
+    flex:1;
+    min-width:120px;
+    background:transparent;
+    border:none;
+    color:#aaa;
+    padding:10px;
+    border-radius:10px;
+    cursor:pointer;
+    font-size:13px;
+    font-weight:600;
+    transition:all .2s ease;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+}
+
+.tab-btn:hover{
+    color:white;
+    background:rgba(255,255,255,.05);
+}
+
+.tab-btn.active{
+    background:#7a5cff;
+    color:white;
+    box-shadow:0 0 10px rgba(122,92,255,.4);
+}
+
+/* CONTADOR */
+.count-badge{
+    background:rgba(0,255,204,.2);
+    color:#00ffcc;
+    font-size:11px;
+    padding:2px 8px;
+    border-radius:20px;
+    border:1px solid rgba(0,255,204,.3);
+    margin-bottom:15px;
+    display:inline-block;
+}
+
+/* LISTA */
+.log-list{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    max-height:520px;
+    overflow-y:auto;
+    padding-right:5px;
+}
+
+.log-list::-webkit-scrollbar{ width:6px; }
+.log-list::-webkit-scrollbar-thumb{ background:#7a5cff; border-radius:10px; }
+
+/* ITEM */
+.log-item{
+    background:rgba(255,255,255,.03);
+    border:1px solid rgba(122,92,255,.15);
+    border-left:5px solid #7a5cff;
+    border-radius:14px;
+    padding:16px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    animation:slideIn .3s ease;
+    gap:15px;
+}
+
+/* Mensaje enviado por el dueño de esa sesión → azul */
+.log-item.sent-msg{
+    border-left-color:#7a5cff;
+    background:rgba(122,92,255,.05);
+}
+
+/* Mensajes de otros usuarios → verde */
+.log-item.recv-msg{
+    border-left-color:#00ffcc;
+    background:rgba(0,255,204,.02);
+}
+
+/* Expirado */
+.log-item.expired-msg{
+    border-left-color:#555;
+    opacity:.5;
+}
+
+.log-content{ flex:1; }
+
+.log-user{
+    font-size:11px;
+    color:#a291ff;
+    text-transform:uppercase;
+    letter-spacing:.5px;
+    margin-bottom:4px;
+    font-weight:bold;
+    display:flex;
+    align-items:center;
+    gap:6px;
+}
+
+.user-tag{
+    font-size:10px;
+    padding:1px 6px;
+    border-radius:6px;
+    font-weight:bold;
+}
+
+.tag-sent{ background:rgba(122,92,255,.3); color:#c4b4ff; }
+.tag-recv{ background:rgba(0,255,204,.15); color:#00ffcc; }
+.tag-exp{ background:rgba(100,100,100,.2); color:#888; }
+
+.log-text{
+    font-size:14px;
+    color:#eee;
+    line-height:1.4;
+    word-break:break-word;
+}
+
+.log-fecha{
+    font-size:11px;
+    color:#666;
+    margin-top:5px;
+}
+
+.right-controls{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    flex-direction:column;
+    align-items:flex-end;
+}
+
+.log-timer{
+    font-size:12px;
+    color:#00ffcc;
+    background:rgba(0,255,204,.1);
+    padding:5px 10px;
+    border-radius:20px;
+    white-space:nowrap;
+    border:1px solid rgba(0,255,204,.2);
+    animation:pulse 1.5s infinite;
+}
+
+.log-timer.expired{
+    color:#888;
+    background:rgba(100,100,100,.1);
+    border-color:rgba(100,100,100,.2);
+    animation:none;
+}
+
+.log-timer.saved-long{
+    color:#a291ff;
+    background:rgba(122,92,255,.1);
+    border-color:rgba(122,92,255,.3);
+    animation:none;
+}
+
+.empty-state{
+    text-align:center;
+    padding:40px 0;
+    color:#666;
+    font-style:italic;
+    font-size:15px;
+}
+
+.loading-state{
+    text-align:center;
+    padding:40px 0;
+    color:#00ffcc;
+    font-size:15px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+}
+
+.spinner{
+    width:20px;
+    height:20px;
+    border:2px solid rgba(0,255,204,.2);
+    border-top-color:#00ffcc;
+    border-radius:50%;
+    animation:spin .7s linear infinite;
+}
+
+@keyframes spin{ to{ transform:rotate(360deg); } }
+
+@keyframes slideIn{
+    from{ opacity:0; transform:translateY(5px); }
+    to{ opacity:1; transform:translateY(0); }
+}
+
+@keyframes pulse{
+    0%{ box-shadow:0 0 0 rgba(0,255,204,0); }
+    50%{ box-shadow:0 0 10px rgba(0,255,204,.4); }
+    100%{ box-shadow:0 0 0 rgba(0,255,204,0); }
+}
+
+/* FILTRO TIEMPO */
+.filtro-tiempo{
+    display:flex;
+    gap:8px;
+    margin-bottom:15px;
+    flex-wrap:wrap;
+}
+
+.filtro-btn{
+    background:rgba(255,255,255,.05);
+    border:1px solid rgba(255,255,255,.1);
+    color:#aaa;
+    padding:6px 14px;
+    border-radius:20px;
+    cursor:pointer;
+    font-size:12px;
+    transition:.2s;
+}
+
+.filtro-btn:hover{ color:white; border-color:#7a5cff; }
+.filtro-btn.active{ background:#7a5cff; color:white; border-color:#7a5cff; }
+
+</style>
+</head>
+
+<body>
+
+<div class="repo-container">
+
+    <!-- HEADER -->
+    <div class="repo-header">
+        <div class="repo-title">📡 Repositorio: En listado</div>
+        <div class="header-actions">
+            <a href="./Mensajes_.html" class="back-btn">← Volver</a>
+        </div>
+    </div>
+
+    <!-- ESTADO CONEXIÓN -->
+    <div class="status-bar">
+        <div class="status-dot" id="statusDot"></div>
+        <span id="statusText">Conectando a Firebase...</span>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs-container">
+        <button class="tab-btn active" id="tabTodos" onclick="cambiarTab('todos')">
+            💬 Todos los mensajes
+        </button>
+        <button class="tab-btn" id="tabActivos" onclick="cambiarTab('activos')">
+            ⚡ Activos
+        </button>
+        <button class="tab-btn" id="tabExpirados" onclick="cambiarTab('expirados')">
+            🧨 Expirados
+        </button>
+    </div>
+
+    <!-- FILTRO DE TIEMPO -->
+    <div class="filtro-tiempo" id="filtroTiempoContainer">
+        <button class="filtro-btn active" id="ft1h" onclick="cambiarFiltroTiempo('1h')">Última 1h</button>
+        <button class="filtro-btn" id="ft6h" onclick="cambiarFiltroTiempo('6h')">Últimas 6h</button>
+        <button class="filtro-btn" id="ft12h" onclick="cambiarFiltroTiempo('12h')">Últimas 12h</button>
+        <button class="filtro-btn" id="ft24h" onclick="cambiarFiltroTiempo('24h')">Últimas 24h</button>
+        <button class="filtro-btn" id="ftAll" onclick="cambiarFiltroTiempo('all')">Todo</button>
+    </div>
+
+    <!-- CONTADOR -->
+    <div class="count-badge" id="countBadge">Cargando...</div>
+
+    <!-- LOGS -->
+    <div class="log-list" id="logList">
+        <div class="loading-state">
+            <div class="spinner"></div>
+            Conectando a la base de datos...
+        </div>
+    </div>
+
+</div>
+
+<!-- FIREBASE SDK -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+<script>
+
+/* =========================================================
+   FIREBASE — misma config que Mensajes_.html
+========================================================= */
+const firebaseConfig = {
+    apiKey:"AIzaSyAWojveM3FvPHcgqulPqyEqUVX7AL7rdYw",
+    authDomain:"gemini-ai-data-base.firebaseapp.com",
+    projectId:"gemini-ai-data-base",
+    storageBucket:"gemini-ai-data-base.firebasestorage.app",
+    messagingSenderId:"601122020069",
+    appId:"1:601122020069:web:4ebfefeea5aff1daeb920c",
+    measurementId:"G-K34K751P6T"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const mensajesRef = db.collection("mensajes");
+
+/* =========================================================
+   ESTADO
+========================================================= */
+let tabActual      = 'todos';   // todos | activos | expirados
+let filtroTiempo   = '1h';      // 1h | 6h | 12h | 24h | all
+let todosLosMensajes = [];       // cache local de Firestore
+
+/* =========================================================
+   CAMBIAR TAB
+========================================================= */
+function cambiarTab(tab) {
+    tabActual = tab;
+    ['todos','activos','expirados'].forEach(t => {
+        const btn = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
+        if (btn) btn.classList.toggle('active', t === tab);
+    });
+    renderLista();
+}
+
+/* =========================================================
+   CAMBIAR FILTRO DE TIEMPO
+========================================================= */
+function cambiarFiltroTiempo(rango) {
+    filtroTiempo = rango;
+    ['1h','6h','12h','24h','All'].forEach(r => {
+        const btn = document.getElementById('ft' + r);
+        if (btn) btn.classList.toggle('active', r.toLowerCase() === rango);
+    });
+    renderLista();
+}
+
+/* =========================================================
+   FORMATEAR FECHA
+========================================================= */
+function formatFecha(millis) {
+    if (!millis) return '';
+    const d = new Date(millis);
+    return d.toLocaleString('es-EC', {
+        day:'2-digit', month:'short',
+        hour:'2-digit', minute:'2-digit'
+    });
+}
+
+/* =========================================================
+   ESCAPE HTML
+========================================================= */
+function escapeHTML(str) {
+    if (!str || typeof str !== 'string') return '[Archivo]';
+    // Si es imagen base64 muy larga, resumir
+    if (str.startsWith('data:image')) return '🖼️ [Imagen adjunta]';
+    if (str === '[Audio Stream]') return '🎙️ [Mensaje de Audio]';
+    return str.replace(/[&<>'"]/g,
+        t => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[t]||t)
+    );
+}
+
+/* =========================================================
+   CALCULAR TIEMPO RESTANTE
+========================================================= */
+function calcularTimeLeft(msg) {
+    if (!msg.fecha) return null;
+    const tiempoGuardado = (msg.tiempoGuardado || 300) * 1000;
+    const transcurrido   = Date.now() - msg.fecha;
+    return Math.ceil((tiempoGuardado - transcurrido) / 1000);
+}
+
+/* =========================================================
+   RENDERIZAR LISTA
+========================================================= */
+function renderLista() {
+    const container = document.getElementById('logList');
+    const ahora = Date.now();
+
+    // Filtro de tiempo
+    let limiteMs = 60 * 60 * 1000; // 1h por defecto
+    if (filtroTiempo === '6h')  limiteMs = 6  * 60 * 60 * 1000;
+    if (filtroTiempo === '12h') limiteMs = 12 * 60 * 60 * 1000;
+    if (filtroTiempo === '24h') limiteMs = 24 * 60 * 60 * 1000;
+    if (filtroTiempo === 'all') limiteMs = Infinity;
+
+    let lista = todosLosMensajes.filter(msg => {
+        if (!msg.fecha) return false;
+        return (ahora - msg.fecha) <= limiteMs;
+    });
+
+    // Filtro de tab
+    if (tabActual === 'activos') {
+        lista = lista.filter(msg => calcularTimeLeft(msg) > 0);
+    } else if (tabActual === 'expirados') {
+        lista = lista.filter(msg => calcularTimeLeft(msg) <= 0);
+    }
+
+    // Más recientes primero
+    lista = [...lista].reverse();
+
+    // Actualizar contador
+    document.getElementById('countBadge').innerText =
+        `${lista.length} mensaje${lista.length !== 1 ? 's' : ''} encontrado${lista.length !== 1 ? 's' : ''}`;
+
+    container.innerHTML = '';
+
+    if (lista.length === 0) {
+        container.innerHTML = `<div class="empty-state">Sin mensajes en este rango de tiempo.</div>`;
+        return;
+    }
+
+    lista.forEach(msg => {
+        const timeLeft = calcularTimeLeft(msg);
+        const expirado = timeLeft !== null && timeLeft <= 0;
+
+        const item = document.createElement('div');
+        item.classList.add('log-item');
+
+        // Estilo según tipo
+        if (expirado) {
+            item.classList.add('expired-msg');
+        } else if (msg.esMio) {
+            item.classList.add('sent-msg');
+        } else {
+            item.classList.add('recv-msg');
+        }
+
+        // Etiqueta de usuario
+        const tagClass = expirado ? 'tag-exp' : (msg.esMio ? 'tag-sent' : 'tag-recv');
+        const tagLabel = msg.esMio ? 'TÚ' : 'OTRO';
+
+        // Etiqueta de tiempo
+        let tiempoHTML = '';
+        if (timeLeft === null) {
+            tiempoHTML = `<span class="log-timer saved-long">⏳ Sin fecha</span>`;
+        } else if (expirado) {
+            // Mostrar igual como "último mensaje" aunque expiró
+            tiempoHTML = `<span class="log-timer expired">✔ Expirado</span>`;
+        } else if (timeLeft > 3600) {
+            const h = Math.floor(timeLeft / 3600);
+            const m = Math.floor((timeLeft % 3600) / 60);
+            tiempoHTML = `<span class="log-timer saved-long">💾 ${h}h ${m}m restantes</span>`;
+        } else if (timeLeft > 60) {
+            const m = Math.floor(timeLeft / 60);
+            const s = timeLeft % 60;
+            tiempoHTML = `<span class="log-timer">⏱️ ${m}m ${s}s</span>`;
+        } else {
+            tiempoHTML = `<span class="log-timer">🧨 ${timeLeft}s</span>`;
+        }
+
+        // ID corto del usuario
+        const uidCorto = (msg.usuario || 'desconocido').substring(0, 8);
+
+        item.innerHTML = `
+            <div class="log-content">
+                <div class="log-user">
+                    ID: ${uidCorto}
+                    <span class="user-tag ${tagClass}">${tagLabel}</span>
+                </div>
+                <div class="log-text">${escapeHTML(msg.texto)}</div>
+                <div class="log-fecha">${formatFecha(msg.fecha)}</div>
+            </div>
+            <div class="right-controls">
+                ${tiempoHTML}
+            </div>
+        `;
+
+        container.appendChild(item);
+    });
+}
+
+/* =========================================================
+   ESCUCHAR FIRESTORE EN TIEMPO REAL
+   — Carga TODOS los mensajes de las últimas 24h
+   — Se actualiza al llegar nuevos mensajes
+   — Funciona desde cualquier dispositivo
+========================================================= */
+
+// Calculamos el límite de 24h para la query inicial
+const hace24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+mensajesRef
+    .where("fecha", ">=", firebase.firestore.Timestamp.fromDate(hace24h))
+    .orderBy("fecha", "asc")
+    .onSnapshot({ includeMetadataChanges: false }, snapshot => {
+
+        snapshot.docChanges().forEach(change => {
+            const data  = change.doc.data();
+            const docId = change.doc.id;
+
+            if (change.type === 'removed') {
+                todosLosMensajes = todosLosMensajes.filter(m => m.docId !== docId);
+                return;
+            }
+
+            // Sin timestamp todavía
+            if (!data.fecha) return;
+
+            const fechaMs = data.fecha.toMillis();
+            const existente = todosLosMensajes.findIndex(m => m.docId === docId);
+
+            const entry = {
+                docId,
+                texto:         data.texto  || '',
+                tipo:          data.tipo   || 'texto',
+                usuario:       data.usuario || '',
+                tiempoGuardado:data.tiempoGuardado || 300,
+                fecha:         fechaMs,
+                esMio:         false  // En el listado no sabemos quién es el dueño desde otro dispositivo
+            };
+
+            if (existente >= 0) {
+                todosLosMensajes[existente] = entry;
+            } else {
+                todosLosMensajes.push(entry);
+            }
+        });
+
+        // Ordenar por fecha
+        todosLosMensajes.sort((a, b) => a.fecha - b.fecha);
+
+        renderLista();
+
+        // Estado online
+        const dot  = document.getElementById('statusDot');
+        const text = document.getElementById('statusText');
+        dot.className  = 'status-dot online';
+        text.innerText = `Cloud Firestore Online ✓ — ${todosLosMensajes.length} mensaje(s) en las últimas 24h`;
+
+    }, err => {
+        console.error('Firestore error:', err);
+        const dot  = document.getElementById('statusDot');
+        const text = document.getElementById('statusText');
+        dot.className  = 'status-dot error';
+        text.innerText = 'Error de conexión ✗ — ' + err.message;
+
+        document.getElementById('logList').innerHTML =
+            `<div class="empty-state">⚠️ No se pudo conectar a Firebase.<br>${err.message}</div>`;
+    });
+
+/* =========================================================
+   AUTO-REFRESH de la UI cada segundo (actualiza timers)
+========================================================= */
+setInterval(() => {
+    if (todosLosMensajes.length > 0) renderLista();
+}, 5000);
+
+</script>
+
+</body>
+</html>
